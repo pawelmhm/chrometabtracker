@@ -18,9 +18,16 @@ var ChromeTabs = {
     this.listenToClicks();
     this.listenToUpdates();
     this.listenToNewTabs();
+    this.listenToActive();
   },
+  listenToActive: function () {
+    chrome.tabs.onActivated.addListener(function (activeInfo){
+      console.log(activeInfo)
+    })
+  }, 
 
   listenToUpdates: function () {
+    // existing tab updated
     self = this;
     
     chrome.tabs.onUpdated.addListener(function (tabId,changeInfo,tab) {
@@ -29,6 +36,8 @@ var ChromeTabs = {
   },
 
   listenToNewTabs: function () {
+    // new tab is opened
+    self = this;
     chrome.tabs.onCreated.addListener(function (tab) {
       chrome.tabs.onUpdated.addListener(function (tabId,changeInfo,tab) {
         self.handleUpdate(tabId,changeInfo,tab)

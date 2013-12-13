@@ -14,36 +14,25 @@ var ChromeTabs = {
     this.listen() //defines what to listen for in chrome tabs
   },
 
+  launchApp: function() {
+    app.tabs = new app.tabsCollection();
+    app.tabsView = new app.allTabsView();
+  },
+
   listen: function () {
     this.listenToClicks();
-    this.listenToUpdates();
-    this.listenToNewTabs();
     this.listenToActive();
   },
+
   listenToActive: function () {
+    // each time a tab becomes active - pass it to our app
     chrome.tabs.onActivated.addListener(function (activeInfo){
-      console.log(activeInfo)
+      moment = +new Date();
+      chrome.tabs.get(activeInfo["tabId"], function (tab) {  
+        app.tabs.enter(tab,moment);
+      })
     })
   }, 
-
-  listenToUpdates: function () {
-    // existing tab updated
-    self = this;
-    
-    chrome.tabs.onUpdated.addListener(function (tabId,changeInfo,tab) {
-      self.handleUpdate(tabId,changeInfo,tab)
-    });
-  },
-
-  listenToNewTabs: function () {
-    // new tab is opened
-    self = this;
-    chrome.tabs.onCreated.addListener(function (tab) {
-      chrome.tabs.onUpdated.addListener(function (tabId,changeInfo,tab) {
-        self.handleUpdate(tabId,changeInfo,tab)
-      })
-    });
-  },
 
   listenToClicks: function () {
     // When extension icon is clicked open background page with all the scripts and app
@@ -53,88 +42,80 @@ var ChromeTabs = {
       chrome.tabs.create({"url":url})
     })
   },
-
-  launchApp: function() {
-    app.tabs = new app.tabsCollection();
-    app.tabsView = new app.allTabsView();
-  },
-
-  handleUpdate:  function (tabId,changeInfo,tab) {
-    // gets a tab from chrome, turns it into backbone model, and adds it
-    // to our collection (of course only if tab is fully loaded; status == complete)
-    console.log("handle update")
-    if (changeInfo["status"] != "complete") return false;
-    newTab = new app.tabModel(tab);
-    if (newTab.checkIt()) {
-      app.tabs.add(newTab)   
-    }     
-  },
 }
 
 /* 
-Proper Backbone app
+App proper - receives input from ChromeTabs object and produces output in form of html page.
 */
 
 var app = app || {};
 
 app.tabModel = Backbone.Model.extend({
-  defaults: {
-    "id": 0,
-    'index':0,
-    'active':false,
-    'url':""
-  },
   initialize: function () {
-    //this["domain"] = this.getDomain()
-    //this.set("url", this.getDomain())
-    //console.log(this.get("url"))
+    //
   },
   validate: function (attrs,options) {
     // called before save
-    // console.log("model valid",this.attributes["url"])
 
   },
-  checkIt:function () {
-    console.log(this.get("url"))
-    if (this.get("url").indexOf("http") != -1) {
-      return true
-    } 
-    return false;
+  checkIfHttp:function () {
+    //console.log("checkIfHttp",this.get("url"))
+    return this.get("url").indexOf("http") != -1;
   },
-  getDomain: function (url) {
+  fixDomain: function (url) {
     // returns domain name, without subpages
-    return this.get("url").split("/")[2]
+    this.url = this.get("url").split("/")[2]
   },
-  checkHttp:function (url) {
-    // if url is http return true
-    return true
-    //return this.get("url").indexOf("http") != -1;
+  updateDuration: function (moment) {    
+    howLongActive = moment - this["lastActive"];
+    this.set("duration",this.get("duration") + howLongActive)
+    console.log("duration for tab",this["url"],"updated to",this["duration"])
   }
 });
 
 app.tabsCollection = Backbone.Collection.extend({
   model: app.tabModel,
   localStorage: new Backbone.LocalStorage('tab-store'), 
+  
   initialize: function () {
-    this.on("add",function (tab) {
-      tab.set("url",this.fixUrl(tab))
-      console.log("logging it!",tab)
-    })
-  },
-  logger: function () {
-    console.log("logger run")
-  },
-  parseTabs: function (tabId,changeInfo,tab) {
-    console.log("parse tabs", tab);
-    if (!tab) { console.error("no tab here")};
 
   },
-  newTab: function (tab) {
-    console.log("newTab",tab)
+
+  comparator: "lastActive",
+  
+  enter: function (tab,moment) {
+    console.log("enter",tab["url"])
+    newTab = new app.tabModel(tab);
+
+    this.sort()
+
+    // update a tab active before this one became active
+    // calculate it's duration, but do this only if we have some tracked tabs
+    if (this.length > 0) this.getLast().updateDuration(moment)
+    
+    // if not http ignore it
+    if (!newTab.checkIfHttp()) return false;
+
+    // if not tracked start tracking it; add it to collection
+    if(!this.isTracked(tab["id"])) this.addOne(newTab,moment);  
+
+    // tab is in collection, it becomes active
+    this.get(tab["id"]).set("lastActive", moment);
   },
-  fixUrl: function (tab) {
-    return tab.get("url").split("/")[2]
-  }
+  isTracked: function (tabId) {
+    return this.get(tabId) 
+  },
+  addOne: function (tab,moment) {
+    console.log("tab",tab["url"],tab["id"],"addded")
+    tab.fixDomain();
+    tab.set("lastActive",moment);
+    tab.set("duration", 0);
+    this.add(tab);
+  },
+  getLast: function () {
+    console.log("get Last", this.at(this.length-1).get("url"))
+    return this.at(this.length-1)
+  }, 
 });
 
 app.tabView = Backbone.View.extend({
@@ -142,6 +123,7 @@ app.tabView = Backbone.View.extend({
   template: Mustache.compile($("#temp").html()),
   render: function () {
     //console.log("render in particular view",this.model.toJSON());
+    console.log(this.model.toJSON())
     this.$el.html(this.template(this.model.toJSON()));
     return this;
   },

@@ -64,7 +64,7 @@ app.tabModel = Backbone.Model.extend({
   },
   fixDomain: function (url) {
     // returns domain name, without subpages
-    this.url = this.get("url").split("/")[2]
+    this.set("url", this.get("url").split("/")[2])
   },
   updateDuration: function (moment) {    
     howLongActive = moment - this["lastActive"];
@@ -103,6 +103,7 @@ app.tabsCollection = Backbone.Collection.extend({
     this.get(tab["id"]).set("lastActive", moment);
   },
   isTracked: function (tabId) {
+    // TODO get a domain not tabId, you can have different tabs but same domain
     return this.get(tabId) 
   },
   addOne: function (tab,moment) {

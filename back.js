@@ -16,7 +16,7 @@ var ChromeTabs = {
 
   launchApp: function() {
     app.tabs = new app.tabsCollection();
-    app.tabsView = new app.allTabsView();
+    app.tabsView = new app.allTabsView();  
   },
 
   listen: function () {
@@ -79,7 +79,9 @@ app.tabsCollection = Backbone.Collection.extend({
   localStorage: new Backbone.LocalStorage('tab-store'), 
   
   initialize: function () {
-
+    console.log("collection initialized");
+    this.fetch();
+    console.log("this.models",this.models.length);
   },
 
   comparator: "lastActive",
@@ -109,7 +111,7 @@ app.tabsCollection = Backbone.Collection.extend({
     //console.log("isTracked tabModel", tabMod.get('url'));
     this.models.forEach(function (model) {
         if (newTab.get('url') == model.get("url")) {
-            console.log("same url is tracked", model.get("url"));
+            //console.log("same url is tracked", model.get("url"));
             tracked = true;
         };
     }); 
@@ -124,6 +126,7 @@ app.tabsCollection = Backbone.Collection.extend({
     tabModel.set("duration", 0);
    // tabModel.fixDomain();
     this.add(tabModel);
+    tabModel.save();
     console.log("tab, ", tabModel.get('url'),"added")
   },
   getLast: function () {
@@ -146,10 +149,16 @@ app.allTabsView = Backbone.View.extend({
   el: '#tab-list',
   initialize: function () {
     this.listenTo(app.tabs,"add",this.addOne);
+    this.renderFetched();
   }, 
   addOne: function (tabModel) {
     //console.log("render one")
     var view = new app.tabView({model:tabModel});
     this.$el.append(view.render().el);
+  },
+  renderFetched: function () {
+    app.tabs.models.forEach(function (model) {
+        this.addOne(model);
+    }, this);
   }
 });

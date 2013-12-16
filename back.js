@@ -29,6 +29,7 @@ var ChromeTabs = {
     chrome.tabs.onActivated.addListener(function (activeInfo){
       moment = +new Date();
       chrome.tabs.get(activeInfo["tabId"], function (tab) {  
+        console.log("app enter",tab["url"])
         app.tabs.enter(tab,moment);
       })
     })
@@ -67,9 +68,9 @@ app.tabModel = Backbone.Model.extend({
     this.set("url", this.get("url").split("/")[2])
   },
   updateDuration: function (moment) {    
-    howLongActive = moment - this["lastActive"];
+    howLongActive = moment - this.get("lastActive");
     this.set("duration",this.get("duration") + howLongActive)
-    console.log("duration for tab",this["url"],"updated to",this["duration"])
+    console.log("duration for tab",this.get("url"),"updated to",this.get("duration"))
   }
 });
 
@@ -90,10 +91,10 @@ app.tabsCollection = Backbone.Collection.extend({
     this.sort()
 
     // update a tab active before this one became active
-    // calculate it's duration, but do this only if we have some tracked tabs
+    // calculate its duration, but do this only if we have some tracked tabs
     if (this.length > 0) this.getLast().updateDuration(moment)
     
-    // if not http ignore it
+    // if not http stop right there
     if (!newTab.checkIfHttp()) return false;
 
     // if not tracked start tracking it; add it to collection

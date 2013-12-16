@@ -12,7 +12,6 @@ describe("Test individual models", function () {
 
     it("should return false if it's not http", function () {
         var testModel = new app.tabModel({"url":"chrome-extension://jako.ja"});
-        console.log(testModel.get("url"))
         expect(testModel.checkIfHttp()).toBe(false);
     })
 
@@ -30,21 +29,30 @@ describe("Test individual models", function () {
     });
 });
 
-describe("Test collection", function () {
-    
-    it("app.tabs (our collection) should be defined",function () {
-        expect(app.tabs).toBeDefined();
-    });
+    describe("Test collection", function () {
+        
 
-    it("after opening new tab it should be in app.tabs", function () {
-        expect(app.tabs.length).toBe(1);
-    });
+        xit("app.tabs (our collection) should be defined",function () {
+            expect(app.tabs).toBeDefined();
+            expect(app.tabs.length).toBe(1);
+        });
+        
+        xit("after opening new tab it should be in app.tabs", function () {
+            chrome.tabs.create({"url":"http://www.google.com"});
+            setTimeout(function () {
+                expect(app.tabs.length).toBe(1);
+                console.log("app.tabs.length after timeout", app.tabs.length);
+            },1000);
+        }, 1000);
 
-    it("collections.getLast() should return last active page", function () {
-        expect(app.tabs.getLast()).toBeDefined();
-        expect(app.tabs.getLast().get('lastActive')).toBeDefined();
+        it("after opening new tab it shoule be in app.tabs", function (done) {
+            chrome.tabs.create({"url":"http://www.google.com"}, function () {
+                expect(app.tabs.length).toBe(1); //
+                console.log("app.tabs.length in callback to chrome.tabs.create",app.tabs.length); //value 0 
+            done();
+            })
+        });
     });
-});
 
 
 

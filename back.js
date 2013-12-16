@@ -29,7 +29,6 @@ var ChromeTabs = {
     chrome.tabs.onActivated.addListener(function (activeInfo){
       moment = +new Date();
       chrome.tabs.get(activeInfo["tabId"], function (tab) {  
-        console.log("app enter",tab["url"])
         app.tabs.enter(tab,moment);
       })
     })
@@ -63,14 +62,15 @@ app.tabModel = Backbone.Model.extend({
     //console.log("checkIfHttp",this.get("url"))
     return this.get("url").indexOf("http") != -1;
   },
-  fixDomain: function (url) {
+  fixDomain: function () {
     // returns domain name, without subpages
-    this.set("url", this.get("url").split("/")[2])
+    // console.log("fix domain",this.get('url'));
+    this.set("url", this.get("url").split("/")[2]);
   },
   updateDuration: function (moment) {    
     howLongActive = moment - this.get("lastActive");
     this.set("duration",this.get("duration") + howLongActive)
-    console.log("duration for tab",this.get("url"),"updated to",this.get("duration"))
+   // console.log("duration for tab",this.get("url"),"updated to",this.get("duration"))
   }
 });
 
@@ -85,9 +85,8 @@ app.tabsCollection = Backbone.Collection.extend({
   comparator: "lastActive",
   
   enter: function (tab,moment) {
-    console.log("enter",tab["url"])
+    console.log(">>>>>>>> enter",tab["url"])
     newTab = new app.tabModel(tab);
-
     this.sort()
 
     // update a tab active before this one became active
@@ -96,26 +95,39 @@ app.tabsCollection = Backbone.Collection.extend({
     
     // if not http stop right there
     if (!newTab.checkIfHttp()) return false;
-
+    
+    //console.log(this.isTracked(newTab),'is it tracked result')
     // if not tracked start tracking it; add it to collection
-    if(!this.isTracked(tab["id"])) this.addOne(newTab,moment);  
+    newTab.fixDomain();
+    if(!this.isTracked(newTab)) this.addOne(newTab,moment);  
 
     // tab is in collection, it becomes active
     this.get(tab["id"]).set("lastActive", moment);
   },
-  isTracked: function (tabId) {
-    // TODO get a domain not tabId, you can have different tabs but same domain
-    return this.get(tabId) 
+  isTracked: function (newTab) {
+    var tracked = false;
+    //console.log("isTracked tabModel", tabMod.get('url'));
+    this.models.forEach(function (model) {
+        if (newTab.get('url') == model.get("url")) {
+            console.log("same url is tracked", model.get("url"));
+            tracked = true;
+        };
+    }); 
+    return tracked;
+
+   // console.log("candidate", cand.get('url'));
+
   },
-  addOne: function (tab,moment) {
-    console.log("tab",tab["url"],tab["id"],"addded")
-    tab.fixDomain();
-    tab.set("lastActive",moment);
-    tab.set("duration", 0);
-    this.add(tab);
+  addOne: function (tabModel,moment) {
+    //tabModel.fixDomain();
+    tabModel.set("lastActive",moment);
+    tabModel.set("duration", 0);
+   // tabModel.fixDomain();
+    this.add(tabModel);
+    console.log("tab, ", tabModel.get('url'),"added")
   },
   getLast: function () {
-    console.log("get Last", this.at(this.length-1).get("url"))
+    //console.log("get Last", this.at(this.length-1).get("url"))
     return this.at(this.length-1)
   }, 
 });
@@ -125,7 +137,6 @@ app.tabView = Backbone.View.extend({
   template: Mustache.compile($("#temp").html()),
   render: function () {
     //console.log("render in particular view",this.model.toJSON());
-    console.log(this.model.toJSON())
     this.$el.html(this.template(this.model.toJSON()));
     return this;
   },

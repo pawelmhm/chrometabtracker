@@ -1,7 +1,3 @@
-$(function () {  
-  ChromeTabs.run()
-});
-
 var ChromeTabs = {
   /* 
   - Launches app,
@@ -37,9 +33,9 @@ var ChromeTabs = {
   listenToClicks: function () {
     // When extension icon is clicked open background page with all the scripts and app
     chrome.browserAction.onClicked.addListener(function (tab) {
-    url = chrome.extension.getURL('index.html');
-    if (chrome.extension.getViews().length > 1) return false;
-      chrome.tabs.create({"url":url})
+        url = chrome.extension.getURL('index.html');
+        if (chrome.extension.getViews().length > 1) return false;
+            chrome.tabs.create({"url":url})
     })
   },
 }
@@ -64,7 +60,6 @@ app.tabModel = Backbone.Model.extend({
   },
   fixDomain: function () {
     // returns domain name, without subpages
-    // console.log("fix domain",this.get('url'));
     this.set("url", this.get("url").split("/")[2]);
   },
   updateDuration: function (moment) {    
@@ -80,7 +75,7 @@ app.tabsCollection = Backbone.Collection.extend({
   
   initialize: function () {
     console.log("collection initialized");
-  //  this.fetch();
+    this.fetch();
     console.log("this.models",this.models.length);
   },
 
@@ -93,7 +88,10 @@ app.tabsCollection = Backbone.Collection.extend({
 
     // update a tab active before this one became active
     // calculate its duration, but do this only if we have some tracked tabs
-    if (this.length > 0) this.getLast().updateDuration(moment)
+    if (this.length > 0) {
+        this.getLast().updateDuration(moment);
+        this.getLast().save();
+    }
     
     // if not http stop right there
     if (!newTab.checkIfHttp()) return false;
@@ -104,9 +102,6 @@ app.tabsCollection = Backbone.Collection.extend({
     if(!this.isTracked(newTab)) this.addOne(newTab,moment);  
 
     // tab is in collection, it becomes active
-    // TODO lastActive is always undefined
-    //tab = this.where({"url":newTab.get('url')})
-    //console.log("tab where", tab[0].get('lastActive'))
     this.findWhere({"url":newTab.get("url")}).set("lastActive", moment);
   },
 
@@ -124,7 +119,7 @@ app.tabsCollection = Backbone.Collection.extend({
     tabModel.set("lastActive",moment);
     tabModel.set("duration", 0);
     this.add(tabModel);
-    //tabModel.save();
+    tabModel.save();
     console.log("tab, ", tabModel.get('url'),"added")
   },
   getLast: function () {
@@ -173,3 +168,5 @@ app.allTabsView = Backbone.View.extend({
     }, this);
   }
 });
+
+ChromeTabs.run()

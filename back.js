@@ -70,7 +70,7 @@ app.tabModel = Backbone.Model.extend({
   updateDuration: function (moment) {    
     howLongActive = moment - this.get("lastActive");
     this.set("duration",this.get("duration") + howLongActive)
-   // console.log("duration for tab",this.get("url"),"updated to",this.get("duration"))
+    console.log("duration for tab",this.get("url"),"updated to",this.get("duration"))
   }
 });
 
@@ -80,15 +80,15 @@ app.tabsCollection = Backbone.Collection.extend({
   
   initialize: function () {
     console.log("collection initialized");
-    this.fetch();
+  //  this.fetch();
     console.log("this.models",this.models.length);
   },
 
   comparator: "lastActive",
   
   enter: function (tab,moment) {
-    console.log(">>>>>>>> enter",tab["url"])
     newTab = new app.tabModel(tab);
+    console.log(">>>>>>>> enter",newTab.get("url"),newTab.get('lastActive'))
     this.sort()
 
     // update a tab active before this one became active
@@ -104,29 +104,27 @@ app.tabsCollection = Backbone.Collection.extend({
     if(!this.isTracked(newTab)) this.addOne(newTab,moment);  
 
     // tab is in collection, it becomes active
-    this.get(tab["id"]).set("lastActive", moment);
+    // TODO lastActive is always undefined
+    //tab = this.where({"url":newTab.get('url')})
+    //console.log("tab where", tab[0].get('lastActive'))
+    this.findWhere({"url":newTab.get("url")}).set("lastActive", moment);
   },
+
   isTracked: function (newTab) {
     var tracked = false;
-    //console.log("isTracked tabModel", tabMod.get('url'));
     this.models.forEach(function (model) {
         if (newTab.get('url') == model.get("url")) {
-            //console.log("same url is tracked", model.get("url"));
             tracked = true;
         };
     }); 
     return tracked;
-
-   // console.log("candidate", cand.get('url'));
-
   },
+
   addOne: function (tabModel,moment) {
-    //tabModel.fixDomain();
     tabModel.set("lastActive",moment);
     tabModel.set("duration", 0);
-   // tabModel.fixDomain();
     this.add(tabModel);
-    tabModel.save();
+    //tabModel.save();
     console.log("tab, ", tabModel.get('url'),"added")
   },
   getLast: function () {
@@ -137,10 +135,23 @@ app.tabsCollection = Backbone.Collection.extend({
 
 app.tabView = Backbone.View.extend({
   tagName: "li",
+  initialize: function () {
+    this.listenTo(this.model, "change", this.updateView);
+  },
+  updateView: function () {
+      this.render().el;
+  }, 
   template: Mustache.compile($("#temp").html()),
+  makeReadable: function () {
+    clone = _.clone(this.model.attributes);
+    clone["duration"] = clone["duration"]/1000 + " seconds";
+    clone["lastActive"] = new Date(clone["lastActive"]);
+   // console.log(clone, "cloned!!!")
+    return clone; 
+  }, 
   render: function () {
     //console.log("render in particular view",this.model.toJSON());
-    this.$el.html(this.template(this.model.toJSON()));
+    this.$el.html(this.template(this.makeReadable()));
     return this;
   },
 });

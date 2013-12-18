@@ -29,50 +29,50 @@ describe("Test individual models", function () {
     });
 });
 
-    describe("Test collection", function () {
-        it('asynchronous support', function () {
-            runs(function () {
-                newTab = {}; 
-                chrome.tabs.create({}, function(tab) {newTab = tab}) 
-                flag = false;
-                setTimeout(function () {
-                    flag = true;
-                },500); 
-            }); 
-
-            waitsFor(function () {
-                return flag; 
-                }, "message",900);
-            
-            runs(function () {
-                chrome.tabs.remove(newTab["id"]);
-                console.log("value after timeout,", newTab);
-                expect(newTab).toBeDefined();
-                expect(newTab["id"]).toBeDefined();
-            })
+describe("Test collection", function () {
+    it('asynchronous support', function () {
+        runs(function () {
+            newTab = {}; 
+            chrome.tabs.create({}, function(tab) {newTab = tab}) 
+            flag = false;
+            setTimeout(function () {
+                flag = true;
+            },500); 
         }); 
 
-        xit("app.tabs (our collection) should be defined",function () {
-            expect(app.tabs).toBeDefined();
-            expect(app.tabs.length).toBe(1);
-        });
+        waitsFor(function () {
+            return flag; 
+            }, "message",900);
         
-        xit("after opening new tab it should be in app.tabs", function () {
-            chrome.tabs.create({"url":"http://www.google.com"});
-            setTimeout(function () {
-                expect(app.tabs.length).toBe(1);
-                console.log("app.tabs.length after timeout", app.tabs.length);
-            },1000);
-        }, 1000);
+        runs(function () {
+            chrome.tabs.remove(newTab["id"]);
+            console.log("value after timeout,", newTab);
+            expect(newTab).toBeDefined();
+            expect(newTab["id"]).toBeDefined();
+        })
+    }); 
 
-        xit("after opening new tab it shoule be in app.tabs", function (done) {
-            chrome.tabs.create({"url":"http://www.google.com"}, function () {
-                expect(app.tabs.length).toBe(1); //
-                console.log("app.tabs.length in callback to chrome.tabs.create",app.tabs.length); //value 0 
-            done();
-            })
-        });
+    xit("app.tabs (our collection) should be defined",function () {
+        expect(app.tabs).toBeDefined();
+        expect(app.tabs.length).toBe(1);
     });
+    
+    xit("after opening new tab it should be in app.tabs", function () {
+        chrome.tabs.create({"url":"http://www.google.com"});
+        setTimeout(function () {
+            expect(app.tabs.length).toBe(1);
+            console.log("app.tabs.length after timeout", app.tabs.length);
+        },1000);
+    }, 1000);
+
+    xit("after opening new tab it shoule be in app.tabs", function (done) {
+        chrome.tabs.create({"url":"http://www.google.com"}, function () {
+            expect(app.tabs.length).toBe(1); //
+            console.log("app.tabs.length in callback to chrome.tabs.create",app.tabs.length); //value 0 
+        done();
+        })
+    });
+});
 
 
 

@@ -12,7 +12,9 @@ var ChromeTabs = {
 
   launchApp: function() {
     app.tabs = new app.tabsCollection();
-    app.tabsView = new app.allTabsView();  
+    $(document).ready(function () {
+        app.tabsView = new app.allTabsView();
+    })
   },
 
   listen: function () {
@@ -35,7 +37,8 @@ var ChromeTabs = {
     chrome.browserAction.onClicked.addListener(function (tab) {
         url = chrome.extension.getURL('index.html');
         if (chrome.extension.getViews().length > 1) return false;
-            chrome.tabs.create({"url":url})
+        chrome.tabs.create({"url":url}, function (tab) {
+        })
     })
   },
 }
@@ -83,7 +86,7 @@ app.tabsCollection = Backbone.Collection.extend({
   
   enter: function (tab,moment) {
     newTab = new app.tabModel(tab);
-    console.log(">>>>>>>> enter",newTab.get("url"),newTab.get('lastActive'))
+    //console.log(">>>>>>>> enter",newTab.get("url"),newTab.get('lastActive'))
     this.sort()
 
     // update a tab active before this one became active
@@ -102,7 +105,7 @@ app.tabsCollection = Backbone.Collection.extend({
     if(!this.isTracked(newTab)) this.addOne(newTab,moment);  
 
     // tab is in collection, it becomes active
-    this.findWhere({"url":newTab.get("url")}).set("lastActive", moment);
+    this.findWhere({"url":newTab.get("url")}).set("lastActive", moment).save();
   },
 
   isTracked: function (newTab) {
@@ -125,7 +128,12 @@ app.tabsCollection = Backbone.Collection.extend({
   getLast: function () {
     //console.log("get Last", this.at(this.length-1).get("url"))
     return this.at(this.length-1)
-  }, 
+  },
+  nukeCollection : function () {
+    while (this.models.length > 0) {
+        this.at(this.length-1).destroy();
+    };
+  }
 });
 
 app.tabView = Backbone.View.extend({
@@ -139,9 +147,8 @@ app.tabView = Backbone.View.extend({
   template: Mustache.compile($("#temp").html()),
   makeReadable: function () {
     clone = _.clone(this.model.attributes);
-    clone["duration"] = clone["duration"]/1000 + " seconds";
+    clone["duration"] = clone["duration"]/1000 + "seconds";
     clone["lastActive"] = new Date(clone["lastActive"]);
-   // console.log(clone, "cloned!!!")
     return clone; 
   }, 
   render: function () {

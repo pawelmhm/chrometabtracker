@@ -1,0 +1,25 @@
+.body-dark {
+    color: blue; 
+    background: white;
+}
+
+.detail {
+    background: white;
+    width:300px;
+    height:300px;
+    position:absolute;
+    top:200px;
+    left:300px;
+}
+
+.dashboard {
+    padding:10px;
+    margin-bottom:20px;
+}
+
+.detailed {
+    border: 1px dashed black;
+    width:400px;
+    height:400px;
+    margin-top:30px;
+}

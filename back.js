@@ -14,6 +14,7 @@ var ChromeTabs = {
     app.tabs = new app.tabsCollection();
     $(document).ready(function () {
         app.tabsView = new app.allTabsView();
+        app.details = new app.detailedWindow();
     })
   },
 
@@ -137,14 +138,13 @@ app.tabsCollection = Backbone.Collection.extend({
 });
 
 app.tabView = Backbone.View.extend({
-  tagName: "li",
+  tagName: "div",
   initialize: function () {
     this.listenTo(this.model, "change", this.updateView);
   },
   events: {
-    "click":"showDetails",
+    "click .more": "showDetails",
   },
-
   showDetails: function () {
     detail = new app.DetailView({"model":this.makeReadable()});
     te = detail.render();
@@ -155,7 +155,7 @@ app.tabView = Backbone.View.extend({
   template: Mustache.compile($("#temp").html()),
   makeReadable: function () {
     clone = _.clone(this.model.attributes);
-    clone["duration"] = clone["duration"]/1000 + "seconds";
+    clone["duration"] = Math.floor((clone["duration"]/1000)) + " s";
     clone["lastActive"] = new Date(clone["lastActive"]);
     return clone; 
   }, 
@@ -167,12 +167,20 @@ app.tabView = Backbone.View.extend({
 });
 
 app.DetailView = Backbone.View.extend({
+    id: "viewer",
     template: Mustache.compile($(".detail").html()),
     render: function () {
         console.log("Detailed view render",this.template(this.model))
-        this.$el.html(this.template(this.model))
+        element = this.$el.html(this.template(this.model))
+        //app.tabsView.$el.append(element); 
+        app.details.$el.append(element)
+        //document.body.style.backgroundColor = "black";
         return this
     }
+});
+
+app.detailedWindow = Backbone.View.extend( {
+    el: ".detailed"
 })
 
 app.allTabsView = Backbone.View.extend({

@@ -2,21 +2,41 @@
 <html>
   <head>
     <title>Getting Started Extension's Popup</title>
+ 
     <link rel="stylesheet" href="style.css">
-  </head>
+    <link rel="stylesheet" href="lib/bootstrap.css">
+ </head>
   <body>
-    <a id="options-link" href="index.html" target="_blank">See us</a>
-    <h3>Pages visited lately </h3>
-    <div class='content'></div>
-    <ul id="tab-list"></ul>
-    <script type="text/template" id="temp">
-<span> <img src="{{favIconUrl}}"> {{ url }} duration {{ duration  }} lastActive {{ lastActive }}</span>
-      
-    </script>
-    <script type="text/template" class="detail">
-<div> {{url}} {{duration}} </div>
-    </script>
-
+    <div class='container'>
+        <div class="row">
+            <div class="col-xs-6">
+                <h3>Pages visited / Time spent</h3>
+                <div class="dashboard">
+                    <button class="btn btn-primary"> Clear </button>
+                    <button class="btn btn-primary"> Filter </button>
+                    <button class="btn btn-primary"> Minutes/Seconds </button>
+                </div>
+                
+                <div id="tab-list"></div>
+            </div>
+        <div class="row">
+            <div class="col-xs-4 detailed">
+            <h3> Detailed View </h3> 
+                <script type="text/template" id="temp">
+                
+                <img src="{{favIconUrl}}" width="16" height="16"> {{ url }} duration {{ duration  }}
+                <button class="btn btn-default btn-xs more" >more</button>
+                <button class="btn btn-default btn-xs more" >x</button>
+                
+                </script>
+                
+                <script type="text/template" class="detail">
+<img src="{{favIconUrl}}"> {{url}} {{duration}}  lastActive {{ lastActive }}
+                </script>
+            
+            </div>
+        </div>
+    </div>
     <script src="lib/zepto.js"></script> 
     <script src="lib/underscore-min.js"></script>
     <script src="lib/backbone-min.js"></script>

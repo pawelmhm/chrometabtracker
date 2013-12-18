@@ -141,6 +141,14 @@ app.tabView = Backbone.View.extend({
   initialize: function () {
     this.listenTo(this.model, "change", this.updateView);
   },
+  events: {
+    "click":"showDetails",
+  },
+
+  showDetails: function () {
+    detail = new app.DetailView({"model":this.makeReadable()});
+    te = detail.render();
+  },
   updateView: function () {
       this.render().el;
   }, 
@@ -157,6 +165,15 @@ app.tabView = Backbone.View.extend({
     return this;
   },
 });
+
+app.DetailView = Backbone.View.extend({
+    template: Mustache.compile($(".detail").html()),
+    render: function () {
+        console.log("Detailed view render",this.template(this.model))
+        this.$el.html(this.template(this.model))
+        return this
+    }
+})
 
 app.allTabsView = Backbone.View.extend({
   el: '#tab-list',

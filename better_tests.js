@@ -5,22 +5,6 @@ describe('Test suite', function () {
 });
 
 describe("Test individual models", function () {
-    it("should return true if url is http", function () {
-        var testModel = new app.tabModel({"url":"http://lovestruck.com"});
-        expect(testModel.checkIfHttp()).toBe(true);
-    });
-
-    it("should return false if it's not http", function () {
-        var testModel = new app.tabModel({"url":"chrome-extension://jako.ja"});
-        expect(testModel.checkIfHttp()).toBe(false);
-    })
-
-    it("should correctly set base domain name", function () {
-        var testModel = new app.tabModel({"url":"http://love.me/nola/mola/kola"});
-        testModel.fixDomain();
-        expect(testModel.get('url')).toEqual('love.me')
-    })
-
     it("should correctly set duration", function () {
         now = +new Date();
         var testModel = new app.tabModel({"duration":0,"lastActive":now});
@@ -29,20 +13,40 @@ describe("Test individual models", function () {
     });
 });
 
-describe("Test collection", function () {
+describe("Collection ", function () {
+    it("should clear all items", function () {
+        app.tabs.nukeCollection(); 
+        expect(app.tabs.length).toBe(0);
+    }); 
+
+    it("should return true if url is http", function () {
+        var url ="http://lovestruck.com";
+        expect(app.tabs.isHttp(url)).toBe(true);
+    });
+
+    it("should return false if it's not http", function () {
+        var url = "chrome-extension://jako.ja";
+        expect(app.tabs.isHttp(url)).toBe(false);
+    });
+
+    it("should correctly set base domain name", function () {
+        var url = "http://love.me/nola/mola/kola";
+        expect(app.tabs.getBase(url)).toEqual('love.me');
+    });
+});
+
+describe("Test integration with chrome", function () {
     it('asynchronous support', function () {
         runs(function () {
-            newTab = {}; 
-            chrome.tabs.create({}, function(tab) {newTab = tab}) 
+            newTab = {};
             flag = false;
-            setTimeout(function () {
-                flag = true;
-            },500); 
+            chrome.tabs.create({}, function(tab) { flag = true; newTab = tab; }) 
         }); 
 
         waitsFor(function () {
-            return flag; 
-            }, "message",900);
+           // polls and waits until flag becomes true, if not returns message
+            return flag;
+        }, "tab not created",900); 
         
         runs(function () {
             chrome.tabs.remove(newTab["id"]);
@@ -51,27 +55,6 @@ describe("Test collection", function () {
             expect(newTab["id"]).toBeDefined();
         })
     }); 
-
-    xit("app.tabs (our collection) should be defined",function () {
-        expect(app.tabs).toBeDefined();
-        expect(app.tabs.length).toBe(1);
-    });
-    
-    xit("after opening new tab it should be in app.tabs", function () {
-        chrome.tabs.create({"url":"http://www.google.com"});
-        setTimeout(function () {
-            expect(app.tabs.length).toBe(1);
-            console.log("app.tabs.length after timeout", app.tabs.length);
-        },1000);
-    }, 1000);
-
-    xit("after opening new tab it shoule be in app.tabs", function (done) {
-        chrome.tabs.create({"url":"http://www.google.com"}, function () {
-            expect(app.tabs.length).toBe(1); //
-            console.log("app.tabs.length in callback to chrome.tabs.create",app.tabs.length); //value 0 
-        done();
-        })
-    });
 });
 
 

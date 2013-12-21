@@ -9,12 +9,20 @@
   <body>
     <div class='container'>
         <div class="row">
-            <div class="col-xs-6">
+            <div class="col-xs-6 tabHistory">
                 <h3>Pages visited / Time spent</h3>
                 <div class="dashboard">
                     <button class="btn btn-primary clear"> Clear All </button>
-                    <button class="btn btn-primary"> Filter </button>
-                    <button class="btn btn-primary"> Minutes/Seconds </button>
+                    <div class="col-xs-3">
+                    <select class="form-control timeUnit">
+                        <option>Hours</option>
+                        <option>Minutes</option>
+                        <option>Seconds</option> 
+                    </select>
+                </div>
+                    <div class="col-xs-3">
+                        <input type="text" class="form-control filter" placeholder="filter">
+                    </div>
                 </div>
                 
                 <div id="tab-list"></div>
@@ -24,18 +32,24 @@
             <h3> Detailed View </h3> 
                 <script type="text/template" id="temp">
                 
-                <img src="{{favIconUrl}}" width="16" height="16"> {{ url }} duration {{ duration  }}
-                <button class="btn btn-default btn-xs more" >more</button>
-                <button class="btn btn-default btn-xs more" >x</button>
+                    <img src="{{favIconUrl}}" width="16" height="16"> 
+                    <span>{{ url }} duration 
+                    <span class="duration"> {{ duration  }}</span>  
+                    <span class="unit">{{unit}}</span>
+                    </span>
+                    <button class="btn btn-default btn-xs more">more</button>
+                    <button class="btn btn-default btn-xs more">x</button>
                 
                 </script>
                 
                 <script type="text/template" class="detail">
-<img src="{{favIconUrl}}"> {{url}} {{duration}}  lastActive {{ lastActive }}
+<img src="{{favIconUrl}}"> {{url}} <span class="duration">{{duration}}</span>  lastActive {{ lastActive }}
                 </script>
             
             </div>
         </div>
+    </div>
+    <div class="footer">
     </div>
     <script src="lib/zepto.js"></script> 
     <script src="lib/underscore-min.js"></script>

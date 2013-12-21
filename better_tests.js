@@ -14,7 +14,7 @@ describe("Test individual models", function () {
 });
 
 describe("Collection ", function () {
-    it("should clear all items", function () {
+    xit("should clear all items", function () {
         app.tabs.nukeCollection(); 
         expect(app.tabs.length).toBe(0);
     }); 
@@ -36,7 +36,7 @@ describe("Collection ", function () {
 });
 
 describe("Test integration with chrome", function () {
-    it('asynchronous support', function () {
+    xit('asynchronous support', function () {
         runs(function () {
             newTab = {};
             flag = false;
@@ -57,8 +57,24 @@ describe("Test integration with chrome", function () {
     }); 
 });
 
-
-
+describe("Test view aggregating smaller views", function () {
+    var view = new app.allTabsView({"duration":600});   
+    it("should convert duration between seconds and minutes", function () {
+        expect(view.convertTime('s','m',600 )).toBe(10 );
+    });
+    it("should convert duration between minutes and seconds", function () {
+        expect(view.convertTime("m","s",10)).toBe(600);
+    });
+    it("should convert minutes to ours", function () {
+        expect(view.convertTime("m","h",30)).toBe(0.5);
+    });
+    it("should convert hours to minutes", function () {
+        expect(view.convertTime("h","m",1)).toBe(60);
+    });
+    it("should convert hours to seconds", function () {
+        expect(view.convertTime("h","s",1)).toBe(3600);
+    });
+});
 
 (function() {
     var jasmineEnv = jasmine.getEnv();

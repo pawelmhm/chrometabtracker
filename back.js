@@ -61,7 +61,7 @@ var ChromeTabs = {
 
 /* 
    App proper - receives input from ChromeTabs object and produces output in form of html page.
-   */
+*/
 
 var app = app || {};
 
@@ -220,24 +220,61 @@ app.detailedWindow = Backbone.View.extend( {
 })
 
 app.allTabsView = Backbone.View.extend({
-    el: '#tab-list',
+    el: '.tabHistory',
+    $tabList: $('#tab-list'),
+    // buttons and forms 
+    $clear: $('.clear'), 
+    $filter: $('.filter'),
+    $timeUnit: $('.timeUnit') ,
     initialize: function () {
         this.listenTo(app.tabs,"add", this.addOne);
-        this.listenTo($('.clear'), "click", this.clear)
-
-    this.renderFetched();
+        this.renderFetched();
     }, 
+    events: {
+        "click .clear": "clear",
+        "keyup .filter": "filter",
+        "change .timeUnit": "switchTime"
+    },     
     clear: function () {
-        console.log("about to nuke collection");
         if (confirm("are you sure you want to clear all items?")) {
             app.tabs.nukeCollection();
             location.reload();
         }
     },
+    filter: function () {
+        // Fetch input from filter box,
+        // query views to see if something matches input,
+        // filter views and hide those that do not match input.
+        var query = this.$filter.val(); 
+        this.$tabList.children().each(function (index,li) {
+            // 'this' in jQuery each loop refers to current
+            // dom element of the iteration
+            if ($(this).text().indexOf(query) == -1) { 
+                $(this).hide(3000); 
+            } else {
+                $(this).show();
+            }
+        })
+    }, 
+    switchTime: function () {
+       var unitTo = this.$timeUnit.val(), 
+       durations = $('.duration'),
+       self = this; 
+       durations.each(function (index,tabView) {
+           var singleDuration = $(this).text().split(" "),
+           duration = singleDuration[1], 
+           unitFrom = singleDuration[2],
+           result = self.convertTime(unitFrom,unitTo,duration);
+       }); 
+    },
+    convertTime: function (unitFrom,unitTo,duration) {
+        // TODO fast and efficient time conversion
+        var timeMap = {};   
+    },
     addOne: function (tabModel) {
         //console.log("render one")
         var view = new app.tabView({model:tabModel});
-        this.$el.append(view.render().el);
+        this.$tabList.append(view.render().el);
     },
     renderFetched: function () {
         app.tabs.models.forEach(function (model) {

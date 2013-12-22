@@ -57,24 +57,50 @@ describe("Test integration with chrome", function () {
     }); 
 });
 
-describe("Test view aggregating smaller views", function () {
-    var view = new app.allTabsView({"duration":600});   
+describe("Test time conversion", function () {
+    var allViews = new app.allTabsView({testing:true});   
     it("should convert duration between seconds and minutes", function () {
-        expect(view.convertTime('s','m',600 )).toBe(10 );
+        expect(allViews.convertTime('s','m',600 )).toBe(10 );
     });
     it("should convert duration between minutes and seconds", function () {
-        expect(view.convertTime("m","s",10)).toBe(600);
+        expect(allViews.convertTime("m","s",10)).toBe(600);
     });
     it("should convert minutes to ours", function () {
-        expect(view.convertTime("m","h",30)).toBe(0.5);
+        expect(allViews.convertTime("m","h",30)).toBe(0.5);
     });
     it("should convert hours to minutes", function () {
-        expect(view.convertTime("h","m",1)).toBe(60);
+        expect(allViews.convertTime("h","m",1)).toBe(60);
     });
     it("should convert hours to seconds", function () {
-        expect(view.convertTime("h","s",1)).toBe(3600);
+        expect(allViews.convertTime("h","s",1)).toBe(3600);
     });
 });
+
+describe("Test app.allTabsViews", function () {
+    var allViews = new app.allTabsView({testing:true});   
+    it("should accept options object", function () {
+        expect(allViews.options.testing).toBeDefined();
+        expect(allViews.options.testing).toBe(true);
+    });
+
+    it("should append all new allViews to main interface", function () {
+        var newModel = new app.tabModel({active: true, duration: 5259, id: "www.tfl.gov.uk", lastActive: 1387564946167}),
+            before = allViews.rendered.length;
+        expect(allViews.rendered).toBeDefined();
+        expect(allViews.rendered.length).toBe(0);
+        allViews.addOne(newModel);
+        expect(allViews.rendered.length).toBe(before+1);
+    });
+
+    it("should resort views according to a duration", function () {
+        var newModel = new app.tabModel({active: true, duration: 52999, id: "www.uk.gov.uk", lastActive: 1387564946167}),
+        anotherModel = new app.tabModel({active: true, duration: 8900, id: "www.usa.today", lastActive: 1387564946167});
+        allViews.addOne(newModel); allViews.addOne(anotherModel); 
+        expect(allViews.rendered.length).toBe(3);
+        expect(allViews.rendered[0].model.get('duration')).toBe(5259);
+    })
+});
+
 
 (function() {
     var jasmineEnv = jasmine.getEnv();

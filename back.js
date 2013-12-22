@@ -84,12 +84,6 @@ app.tabModel = Backbone.Model.extend({
     isSaved: function () {
         console.log("model is Saved");
     },
-    checkIfHttp:function () {
-        //console.log("checkIfHttp",this.get("url"))
-    },
-    fixDomain: function () {
-        // returns domain name, without subpages
-    },
     updateDuration: function (moment) {    
         howLongActive = moment - this.get("lastActive");
         this.set("duration",this.get("duration") + howLongActive);
@@ -103,12 +97,12 @@ app.tabsCollection = Backbone.Collection.extend({
 
     initialize: function () {
         console.log("collection initialized");
-        this.fetch();
+        if (!DEBUG_TESTING) this.fetch();
         console.log("this.models",this.models.length);
     },
 
     comparator: "lastActive",
-
+    
     enter: function (tab,moment) {
         console.log("enter:",tab["url"]);
         
@@ -172,6 +166,13 @@ app.tabsCollection = Backbone.Collection.extend({
         while (this.models.length > 0) {
             this.at(this.length-1).destroy()
         }
+    },
+    getTotal: function () {
+        var total = 0;
+        this.models.forEach(function (mod) {
+            total += mod.get('duration');
+        });
+        return total;
     }
 });
 
@@ -182,6 +183,7 @@ app.tabView = Backbone.View.extend({
     },
     events: {
         "click .more": "showDetails",
+        "click .remove": "remove",
     },
     showDetails: function () {
         detail = new app.DetailView({"model":this.makeReadable()});
@@ -189,6 +191,9 @@ app.tabView = Backbone.View.extend({
     },
     updateView: function () {
         this.render().el;
+    },
+    remove: function () {
+        this.$el.remove(); 
     },
     template: Mustache.compile($("#temp").html()),
     makeReadable: function () {
@@ -227,11 +232,12 @@ app.allTabsView = Backbone.View.extend({
     $clear: $('.clear'), 
     $filter: $('.filter'),
     $timeUnit: $('.timeUnit') ,
-    $refreshSort: $(".refreshSort"), 
+    $sort: $(".refreshSort"), 
     initialize: function () {
         this.listenTo(app.tabs,"add", this.addOne);
         this.rendered = [];
         if (!this.options.testing) this.renderFetched();
+        this.displayTotal();
     }, 
     events: {
         "click .clear": "clear",
@@ -282,10 +288,26 @@ app.allTabsView = Backbone.View.extend({
         // 3. sort them on the basis of given model attribute
         // 4. remove all
         // 5. render again according to newly sorted this.rendered
-        return _.sortBy(this.rendered, function (view) {
-            console.log(view.model.get('duration'));
-            return view.model.get('duration');
+        var dictio = {"Last active": 'lastActive', 'Most visited':'duration',
+            'Alphabetically':'url'};
+        var criterium = dictio[this.$sort.val()];
+        console.log(criterium);
+        _.each(this.rendered, function (visibleView) {
+            visibleView.remove();
         }, this);
+        console.log("about to sort views");
+        this.sortViews(criterium);
+        _.each(this.rendered, function (view) {
+            this.$tabList.append(view.render().el);
+        }, this);
+    },
+    sortViews: function (criterium) {
+        if (["duration","url","lastActive"].indexOf(criterium) == -1) {
+            throw 'incorrect sort criterium supplied: "' + criterium + '"!' ;
+        }
+        this.rendered.sort(function (one,two) {
+            return two.model.get(criterium) - one.model.get(criterium);
+        })
     },
     addOne: function (tabModel) {
         // Takes a model (not a view) 
@@ -295,15 +317,16 @@ app.allTabsView = Backbone.View.extend({
         this.rendered.push(view);    
         this.$tabList.append(view.render().el);
     },
-    remove: function (tabModel) {
-        
-    },
     renderFetched: function () {
         // displays all models
         app.tabs.models.forEach(function (model) {
             this.addOne(model);
         }, this);
-    }
+    },
+    displayTotal: function () {
+        $('.total').append(app.tabs.getTotal()/1000/60/60 + " hours");
+    }, 
 });
 
+DEBUG_TESTING = false;
 ChromeTabs.run();

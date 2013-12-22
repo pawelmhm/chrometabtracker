@@ -13,25 +13,47 @@ describe("Test individual models", function () {
     });
 });
 
-describe("Collection ", function () {
+describe("Collection (synchronous methods) ", function () {
+    DEBUG_TESTING = true;
+    var testTabs = new app.tabsCollection();
     xit("should clear all items", function () {
-        app.tabs.nukeCollection(); 
-        expect(app.tabs.length).toBe(0);
+        // nukes local storage, so far tests are still plugged 
+        // to app local storage
+        // TODO add separate storage for test collection
+        testTabs.nukeCollection(); 
+        expect(testTabs.length).toBe(0);
     }); 
 
     it("should return true if url is http", function () {
         var url ="http://lovestruck.com";
-        expect(app.tabs.isHttp(url)).toBe(true);
+        expect(testTabs.isHttp(url)).toBe(true);
     });
 
     it("should return false if it's not http", function () {
         var url = "chrome-extension://jako.ja";
-        expect(app.tabs.isHttp(url)).toBe(false);
+        expect(testTabs.isHttp(url)).toBe(false);
     });
 
     it("should correctly set base domain name", function () {
         var url = "http://love.me/nola/mola/kola";
-        expect(app.tabs.getBase(url)).toEqual('love.me');
+        expect(testTabs.getBase(url)).toEqual('love.me');
+    });
+
+    it("should return correct total for all items", function () {
+        expect(testTabs.models[0]).not.toBeDefined();
+        expect(testTabs.length).toBe(0);
+        var models = [{"duration":10},{"duration":12},{"duration":1}];
+        _.each(models,function (almostModel) { 
+            model = new app.tabModel(almostModel);
+            testTabs.add(model);
+        },this);
+        expect(testTabs.length).toBe(3);
+        expect(testTabs.getTotal()).toBe(23);
+        
+    });
+    it("should set testing to false again", function () {
+        DEBUG_TESTING=false;
+        expect(DEBUG_TESTING).toBe(false);
     });
 });
 
@@ -57,7 +79,7 @@ describe("Test integration with chrome", function () {
     }); 
 });
 
-describe("Test time conversion", function () {
+xdescribe("Test time conversion", function () {
     var allViews = new app.allTabsView({testing:true});   
     it("should convert duration between seconds and minutes", function () {
         expect(allViews.convertTime('s','m',600 )).toBe(10 );
@@ -84,7 +106,7 @@ describe("Test app.allTabsViews", function () {
     });
 
     it("should append all new allViews to main interface", function () {
-        var newModel = new app.tabModel({active: true, duration: 5259, id: "www.tfl.gov.uk", lastActive: 1387564946167}),
+        var newModel = new app.tabModel({active: true, duration: 12, id: "www.tfl.gov.uk", lastActive: 1387564946167}),
             before = allViews.rendered.length;
         expect(allViews.rendered).toBeDefined();
         expect(allViews.rendered.length).toBe(0);
@@ -93,11 +115,13 @@ describe("Test app.allTabsViews", function () {
     });
 
     it("should resort views according to a duration", function () {
-        var newModel = new app.tabModel({active: true, duration: 52999, id: "www.uk.gov.uk", lastActive: 1387564946167}),
-        anotherModel = new app.tabModel({active: true, duration: 8900, id: "www.usa.today", lastActive: 1387564946167});
+        var newModel = new app.tabModel({active: true, duration: 10, id: "www.uk.gov.uk", lastActive: 1387564946167}),
+        anotherModel = new app.tabModel({active: true, duration: 14, id: "www.usa.today", lastActive: 1387564946167});
         allViews.addOne(newModel); allViews.addOne(anotherModel); 
         expect(allViews.rendered.length).toBe(3);
-        expect(allViews.rendered[0].model.get('duration')).toBe(5259);
+        expect(allViews.rendered[0].model.get('duration')).toBe(12);
+        allViews.sortViews('duration');
+        expect(allViews.rendered[0].model.get('duration')).toBe(14);
     })
 });
 

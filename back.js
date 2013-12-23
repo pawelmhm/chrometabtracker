@@ -1,9 +1,22 @@
+DEBUG = true;
+TESTING = false; 
+
+var logger  = function () {
+    var mess = "";
+    if (DEBUG) {
+        for (prop in arguments) {
+            mess += " " + arguments[prop];   
+        }
+    console.log(mess);
+    }
+}; 
+
 var ChromeTabs = {
     /* 
        - Launches app,
        - listens to changes on browser's tabs, 
        - passes data to app.
-       */
+    */
 
     run: function () {
         this.launchApp(); // launches Backbone app
@@ -25,21 +38,22 @@ var ChromeTabs = {
     },
 
     listenToActive: function () {
-        // each time a tab becomes active - pass it to our app
+        // Each time a tab becomes active - pass it to our app
         chrome.tabs.onActivated.addListener(function (activeInfo){
             moment = +new Date();
             chrome.tabs.get(activeInfo.tabId, function (tab) {  
                 if (tab["status"] == "complete") {
-                console.log("!!! >> activated",tab["url"]);   
+                logger("!!! >> activated",tab["url"]);   
                 app.tabs.enter(tab,moment);
                }
             });
         });
     }, 
     listenToUpdates: function () {
+        // When an active tab becomes updated feed it to our app. 
         chrome.tabs.onUpdated.addListener(function (tabId,changeInfo,tab) {
             if (changeInfo["status"] == "complete") {
-                console.log("updated", tab["url"]);
+                logger("updated", tab["url"]);
                 moment = +new Date();
                 app.tabs.enter(tab, moment);
             }
@@ -49,7 +63,7 @@ var ChromeTabs = {
         return 0; 
     },
     listenToClicks: function () {
-        // When extension icon is clicked open background page with all the scripts and app
+        // When extension icon is clicked open index.html with user interface
         chrome.browserAction.onClicked.addListener(function (tab) {
             url = chrome.extension.getURL('index.html');
             if (chrome.extension.getViews().length > 1) return false;
@@ -72,7 +86,7 @@ app.tabModel = Backbone.Model.extend({
     },
     validate: function (attrs,options) {
         // called before save
-        console.log("called before save",this.get("url"));
+        logger("called before save",this.get("url"));
     },
     events: {
         "sync": "isSaved",
@@ -82,12 +96,12 @@ app.tabModel = Backbone.Model.extend({
         console.error("some error while saving");
     },
     isSaved: function () {
-        console.log("model is Saved");
+        logger("model is Saved");
     },
     updateDuration: function (moment) {    
         howLongActive = moment - this.get("lastActive");
         this.set("duration",this.get("duration") + howLongActive);
-        console.log("duration for tab",this.get("url"),"updated to",this.get("duration"));
+        logger("duration for tab",this.get("url"),"updated to",this.get("duration"));
     }
 });
 
@@ -96,36 +110,37 @@ app.tabsCollection = Backbone.Collection.extend({
     localStorage: new Backbone.LocalStorage('tab-store'), 
 
     initialize: function () {
-        console.log("collection initialized");
-        if (!DEBUG_TESTING) this.fetch();
-        console.log("this.models",this.models.length);
+        logger("collection initialized");
+        // When testing we don't want to to have all clutter from normal app runtime. 
+        if (!TESTING) this.fetch();
     },
 
     comparator: "lastActive",
     
     enter: function (tab,moment) {
-        console.log("enter:",tab["url"]);
+        logger("enter:",tab["url"]);
         
         var baseUrl = this.getBase(tab["url"]);
         // update a tab active before this one became active
         // calculate its duration, but do this only if we have some tracked tabs
         if (this.length > 0) {
-            previousTwo = this.lastTab[0];
-            previousModel = this.findWhere({"url":previousTwo});
-            if(previousModel) {
+            previousTabUrl = this.lastTab[0];
+            previousModel = this.findWhere({"url":previousTabUrl});
+            if (previousModel) {
                previousModel.updateDuration(moment);
                previousModel.save();
             } else {
-                console.log("previousTwo", previousTwo);
+                //logger("previousTwo", previousTwo);
             }
-         }
-
+        };
+        
+        // Now handle the current tab. 
         var isItThere = this.findWhere({"url":baseUrl});
         if(!isItThere) {
             var newOne = this.addOne(tab,moment,baseUrl); 
-            if(newOne) {
+            if (newOne) {
                 newOne.save();
-                console.log("tab",newOne.get("url"),"saved");
+                logger("tab",newOne.get("url"),"saved");
             }
         } else {
             // tab is in collection, it becomes active
@@ -134,7 +149,7 @@ app.tabsCollection = Backbone.Collection.extend({
         }
         this.lastTab.pop();
         this.lastTab.push(baseUrl);
-        console.log("this.lastTab",this.lastTab[0]);
+        logger("this.lastTab",this.lastTab[0]);
     },
     lastTab: [],
     getBase: function (url) {
@@ -144,23 +159,24 @@ app.tabsCollection = Backbone.Collection.extend({
         return url.indexOf("http") != -1;
     },
     addOne: function (tab,moment,baseUrl) {
+        // Accepts a tab object from chrome.api, 
+        // moment when the tab became active
+        // and baseUrl without subdomains.
+        // Returns new app.tabModel object
+        // Does not save this object, it only adds it
+        // to collection. 
         if (!this.isHttp(tab["url"])) {
             return false
         }
-        console.log("addOne with tab",baseUrl)
+        logger("addOne with tab",baseUrl)
         var tabModel = new app.tabModel(tab);
         tabModel.set("lastActive",moment);
         tabModel.set("duration", 0);
         tabModel.set("url",baseUrl);
         tabModel.set("id",baseUrl);
         this.add(tabModel);
-        //this.save();
-        console.log("tab, ", tabModel.get('url'),"added");
+        logger("tab, ", tabModel.get('url'),"added");
         return tabModel;
-    },
-    getLast: function () {
-        //console.log("get Last", this.at(this.length-1).get("url"))
-        return this.at(this.length-1);
     },
     nukeCollection : function () {
         while (this.models.length > 0) {
@@ -196,16 +212,22 @@ app.tabView = Backbone.View.extend({
         this.$el.remove(); 
     },
     template: Mustache.compile($("#temp").html()),
-    makeReadable: function () {
+    makeReadable: function (unit) {
         //TODO more efficient way of presenting data
+        var valsUnit = {"s":1000, "m":1000*60, 'h':1000*60*60}; 
         clone = _.clone(this.model.attributes);
-        clone["duration"] = Math.floor((clone["duration"]/1000)) + " s";
-        clone["lastActive"] = new Date(clone["lastActive"]);
+        clone["duration"] = Math.floor((clone["duration"]/valsUnit[unit]));
+        
+        dat = new Date(clone["lastActive"]);
+        readableDate = dat.getHours() + ":" + dat.getUTCMinutes();
+        readableDate += " " + dat.getDate() + "/" + dat.getMonth() +"/" +dat.getFullYear();
+        clone["lastActive"] = readableDate;  
+        clone["timeUnit"] = unit;
         return clone; 
     }, 
-    render: function () {
-        //console.log("render in particular view",this.model.toJSON());
-        this.$el.html(this.template(this.makeReadable()));
+    render: function (unit) {
+        //logger("render in particular view",this.model.toJSON());
+        this.$el.html(this.template(this.makeReadable(unit)));
         return this;
     },
 });
@@ -214,7 +236,7 @@ app.DetailView = Backbone.View.extend({
     id: "viewer",
     template: Mustache.compile($(".detail").html()),
     render: function () {
-        console.log("Detailed view render",this.template(this.model));
+        logger("Detailed view render",this.template(this.model));
         element = this.$el.html(this.template(this.model));
         app.details.$el.append(element);
         return this;
@@ -236,6 +258,7 @@ app.allTabsView = Backbone.View.extend({
     initialize: function () {
         this.listenTo(app.tabs,"add", this.addOne);
         this.rendered = [];
+        this.timeUnit = "s";
         if (!this.options.testing) this.renderFetched();
         this.displayTotal();
     }, 
@@ -267,19 +290,19 @@ app.allTabsView = Backbone.View.extend({
         });
     }, 
     switchTime: function () {
-       var unitTo = this.$timeUnit.val(), 
-       durations = $('.duration'),
-       self = this; 
-       durations.each(function (index,tabView) {
-           var singleDuration = $(this).text().split(" "),
-           duration = singleDuration[1], 
-           unitFrom = singleDuration[2],
-           result = self.convertTime(unitFrom,unitTo,duration);
-       }); 
-    },
-    convertTime: function (unitFrom,unitTo,duration) {
-        // TODO fast and efficient time conversion
-        var timeMap = {};   
+       var unitTo = this.$timeUnit.val(),
+       convertUnits = {"Seconds":"s","Minutes":"m","Hours":"h"},
+       validUnits = ["s","m","h"];
+       unitTo = convertUnits[unitTo];
+       
+       if (validUnits.indexOf(unitTo) == -1) {
+           console.error("wrong value for unitTo", unitTo);
+       };
+       
+       // this.timeUnit is available to all views so they will render
+       // views with new time unit automatically now
+       this.timeUnit = unitTo;
+       this.renderAgain(); 
     },
     refreshSort: function () {
         // TODO resort tabs according to user input (lastActive,duration,alphabetically)
@@ -291,16 +314,9 @@ app.allTabsView = Backbone.View.extend({
         var dictio = {"Last active": 'lastActive', 'Most visited':'duration',
             'Alphabetically':'url'};
         var criterium = dictio[this.$sort.val()];
-        console.log(criterium);
-        _.each(this.rendered, function (visibleView) {
-            visibleView.remove();
-        }, this);
-        console.log("about to sort views");
         this.sortViews(criterium);
-        _.each(this.rendered, function (view) {
-            this.$tabList.append(view.render().el);
-        }, this);
-    },
+        this.renderAgain();
+     },
     sortViews: function (criterium) {
         if (["duration","url","lastActive"].indexOf(criterium) == -1) {
             throw 'incorrect sort criterium supplied: "' + criterium + '"!' ;
@@ -314,19 +330,35 @@ app.allTabsView = Backbone.View.extend({
         // turns it into view, pushes to array of views
         // appends to DOM.
         var view = new app.tabView({model:tabModel});
-        this.rendered.push(view);    
-        this.$tabList.append(view.render().el);
+        this.rendered.push(view);
+        this.renderView(view); //$tabList.append(view.render('m').el);
     },
+    renderView: function (view) {
+        // Appends one view to tab-list.
+        // Takes one Backnone view (app.tabView), 
+        // and time unit in which duration is to be displayed.
+        this.$tabList.append(view.render(this.timeUnit).el);
+    }, 
     renderFetched: function () {
-        // displays all models
+        // Render all models which were fetched from the local storage
+        // by collection during initialization. 
         app.tabs.models.forEach(function (model) {
             this.addOne(model);
         }, this);
     },
+    renderAgain: function () {
+        _.each(this.rendered, function (visibleView) {
+            visibleView.remove();
+        }, this);
+        
+        _.each(this.rendered, function (view) {
+            this.renderView(view,this.timeUnit);
+        }, this);
+    }, 
     displayTotal: function () {
-        $('.total').append(app.tabs.getTotal()/1000/60/60 + " hours");
+        // TODO flexible total (in seconds,minutes, milliseconds);
+        $('.total').append((app.tabs.getTotal()/1000/60/60).toFixed(2) + " hours");
     }, 
 });
 
-DEBUG_TESTING = false;
 ChromeTabs.run();

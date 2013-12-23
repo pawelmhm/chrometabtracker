@@ -14,7 +14,7 @@ describe("Test individual models", function () {
 });
 
 describe("Collection (synchronous methods) ", function () {
-    DEBUG_TESTING = true;
+    TESTING = true;
     var testTabs = new app.tabsCollection();
     xit("should clear all items", function () {
         // nukes local storage, so far tests are still plugged 
@@ -52,8 +52,8 @@ describe("Collection (synchronous methods) ", function () {
         
     });
     it("should set testing to false again", function () {
-        DEBUG_TESTING=false;
-        expect(DEBUG_TESTING).toBe(false);
+        TESTING=false;
+        expect(TESTING).toBe(false);
     });
 });
 
@@ -79,22 +79,17 @@ describe("Test integration with chrome", function () {
     }); 
 });
 
-xdescribe("Test time conversion", function () {
-    var allViews = new app.allTabsView({testing:true});   
-    it("should convert duration between seconds and minutes", function () {
-        expect(allViews.convertTime('s','m',600 )).toBe(10 );
+describe("Test time conversion", function () {
+    var testModel = new app.tabModel({"duration":60000, 'lastActive': +new Date}), 
+        testView = new app.tabView({model:testModel}); 
+    it("should convert duration between miliseconds and seconds", function () {
+        expect(testView.makeReadable('s')['duration']).toBe(60);
     });
-    it("should convert duration between minutes and seconds", function () {
-        expect(allViews.convertTime("m","s",10)).toBe(600);
+    it("should convert duration between miliseconds and minutes", function () {
+        expect(testView.makeReadable("m")['duration']).toBe(1);
     });
-    it("should convert minutes to ours", function () {
-        expect(allViews.convertTime("m","h",30)).toBe(0.5);
-    });
-    it("should convert hours to minutes", function () {
-        expect(allViews.convertTime("h","m",1)).toBe(60);
-    });
-    it("should convert hours to seconds", function () {
-        expect(allViews.convertTime("h","s",1)).toBe(3600);
+    it("should convert miliseconds to hours", function () {
+        expect(testView.makeReadable("h")['duration']).toBe(0);
     });
 });
 

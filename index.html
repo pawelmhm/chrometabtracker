@@ -9,7 +9,7 @@
   <body>
     <div class='container'>
         <div class="row">
-            <div class="col-xs-6 tabHistory">
+            <div class="col-xs-9 tabHistory">
                 <h3>Pages visited / Time spent</h3> <h3 class="total"></h3> 
                 <div class="dashboard">
                     <button class="btn btn-primary clear"> Clear All </button>
@@ -22,9 +22,8 @@
                     </div>
                     <div class="col-xs-4">
                         <select class="form-control refreshSort">
-                            <option>Most visited</option>
                             <option>Last active</option>
-                            <option>Alphabetically</option> 
+                            <option>Most visited</option>
                         </select>
                     </div>
 
@@ -35,27 +34,18 @@
                     
                 <div id="tab-list"></div>
             </div>
-        <div class="row">
-            <div class="col-xs-4 detailed">
-            <h3> Detailed View </h3> 
+
                 <script type="text/template" id="temp">
                 
                     <img src="{{favIconUrl}}" width="16" height="16"> 
                     <span>{{ url }} duration 
                     <span class="duration"> {{ duration  }}</span>  
-                    <span class="unit">{{unit}}</span>
-                    </span>
-                    <button class="btn btn-default btn-xs more">more</button>
+                    <span class="unit">{{timeUnit}}</span>
+                    </span> 
+                    last visited {{ lastActive }}
                     <button class="btn btn-default btn-xs remove">x</button>
                 
                 </script>
-                
-                <script type="text/template" class="detail">
-<img src="{{favIconUrl}}"> {{url}} <span class="duration">{{duration}}</span>  lastActive {{ lastActive }}
-                </script>
-            
-            </div>
-        </div>
     </div>
     <div class="footer">
     </div>

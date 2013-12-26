@@ -10,7 +10,8 @@
     <div class='container'>
         <div class="row">
             <div class="col-xs-9 tabHistory">
-                <h3>Pages visited / Time spent</h3> <h3 class="total"></h3> 
+                <div class="panel panel-default">
+                    <div class="panel-heading"><h3>Pages visited / Time spent <span class="total"></span></h3></div> 
                 <div class="dashboard">
                     <button class="btn btn-primary clear"> Clear All </button>
                     <div class="col-xs-3">
@@ -32,18 +33,25 @@
                      </div>
                  </div>
                     
-                <div id="tab-list"></div>
+                 <table class="table">
+                    <thead>
+                         <tr>
+                             <th>#</th>
+                             <th>url</th>
+                             <th>duration</th>
+                             <th>last active</th>
+                         </tr>
+                    </thead>
+                    <tbody id="tab-list">
+                    </tbody>
+                 </table>
             </div>
-
+        </div>
                 <script type="text/template" id="temp">
-                
-                    <img src="{{favIconUrl}}" width="16" height="16"> 
-                    <span>{{ url }} duration 
-                    <span class="duration"> {{ duration  }}</span>  
-                    <span class="unit">{{timeUnit}}</span>
-                    </span> 
-                    last visited {{ lastActive }}
-                    <button class="btn btn-default btn-xs remove">x</button>
+                 <td>   <img src="{{favIconUrl}}" width="16" height="16"></td> 
+                 <td>{{ url }} </td>
+                 <td> {{ duration  }} </td>
+                 <td> {{lastActive }} <button class="btn btn-default btn-xs remove">x</button></td>
                 
                 </script>
     </div>

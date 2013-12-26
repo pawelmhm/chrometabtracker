@@ -193,7 +193,7 @@ app.tabsCollection = Backbone.Collection.extend({
 });
 
 app.tabView = Backbone.View.extend({
-    tagName: "div",
+    tagName: "tr",
     initialize: function () {
         this.listenTo(this.model, "change", this.updateView);
     },

@@ -11,7 +11,7 @@ Results are displayed in nice way with [Twitter Bootstrap 3.0](http://getbootstr
 
 How it works
 ------------
-There is one object Chrometabs which listens to activity on chrome tabs, if a tab becomes active or updated (url changed) then the data 
+There is one object Chrometabs which runs in the background and listens to events on chrome tabs, if a tab becomes active or updated (url changed) then the data 
 is passed to backbone app. App collection parses the data, checks if the url is tracked or not, updates previous active tab, and handles all the procedures necessary. Most importantly it creates appropriate models when it detects that you entered a new unknown territory (untracked url). As for displaying the data, when the extension icon is clicked, document.ready event fires and the views displaying all the activity is loaded into browser. Views listen to models, so the page is automatically updated when something happens. 
 
 All the data is stored locally, nothing is sent to the server, extension does not ask for permission to make XmlHTTP requests. 

@@ -2,7 +2,7 @@ Chrome History Tracker
 ======================
 
 Google chrome extension which tracks all browsing activity in chrome and stores data in localstorage.
-If you're curious how much time you spend browsing or how much time you spent on each site you visit, then you're in for a treat. 
+If you're curious how much time you spend browsing or how much time you spent on each site you visit, it should be useful for you.
 Displays all the data it gathers at separate page, which can be accessed by simply clicking on chrome extension icon. It counts total time of browsing for each day, and total time browsing for each page.   
 
 Created with [Backbone](http://backbonejs.org/), mostly as exercise in JavaScript MVC framework. Tests are written in [Jasmine](http://pivotal.github.io/jasmine/), they are run when you access separate extension page, tests.html.
